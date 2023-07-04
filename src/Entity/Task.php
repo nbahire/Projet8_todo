@@ -19,15 +19,19 @@ class Task
     private ?\DateTimeImmutable $createdAt;
 
     #[ORM\Column(length: 255, unique: true)]
-    #[Assert\NotBlank(message:"Vous devez saisir un titre.")]
+    #[Assert\NotBlank(message:'Vous devez saisir un titre.')]
     private ?string $title = null;
 
     #[ORM\Column(type: Types::TEXT)]
-    #[Assert\NotBlank(message:"Vous devez saisir du contenu.")]
+    #[Assert\NotBlank(message:'Vous devez saisir du contenu.')]
     private ?string $content = null;
 
     #[ORM\Column(type: 'boolean')]
     private bool $isDone;
+
+    #[ORM\ManyToOne(targetEntity: User::class, inversedBy: 'tasks')]
+    #[ORM\JoinColumn(nullable: false)]
+    private User $user;
 
     public function __construct()
     {
@@ -78,5 +82,17 @@ class Task
     public function toggle($flag): void
     {
         $this->isDone = $flag;
+    }
+
+    public function getUser(): ?User
+    {
+        return $this->user;
+    }
+
+    public function setUser(?User $user): static
+    {
+        $this->user = $user;
+
+        return $this;
     }
 }
