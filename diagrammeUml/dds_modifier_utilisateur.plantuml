@@ -1,0 +1,14 @@
+@startuml modifier_un_utilisateur
+
+actor Administrateur
+boundary Systeme
+database BDD
+
+note left of Administrateur: l'administrateur doit etre authentifié et sur la page d'un utilisateur
+
+Administrateur -> Systeme: nouvelles datas d'un utilisateur
+Systeme -> BDD: modification de l'utilisateur
+BDD --> Systeme : utilisateur modifié
+Systeme --> Administrateur: retour à la liste des utilisateur avec un message de confirmation
+
+@enduml
