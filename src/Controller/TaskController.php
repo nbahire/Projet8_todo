@@ -4,6 +4,10 @@ namespace App\Controller;
 
 use App\Entity\Task;
 use App\Form\TaskType;
+use App\Repository\TaskRepository;
+use Doctrine\ORM\EntityManagerInterface;
+use Doctrine\ORM\Exception\ORMException;
+use Doctrine\ORM\OptimisticLockException;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\Request;
@@ -15,24 +19,23 @@ class TaskController extends AbstractController
     /**
      * @Route("/tasks", name="task_list")
      */
-    public function listAction(): Response
+    public function listAction(TaskRepository $taskRepository): Response
     {
-        return $this->render('task/list.html.twig', ['tasks' => $this->getDoctrine()->getRepository('AppBundle:Task')->findAll()]);
+        return $this->render('task/list.html.twig', ['tasks' => $taskRepository->findAll()]);
     }
 
     /**
      * @Route("/tasks/create", name="task_create")
+     * @throws ORMException
      */
-    public function createAction(Request $request)
+    public function createAction(Request $request, EntityManagerInterface $em): Response
     {
         $task = new Task();
         $form = $this->createForm(TaskType::class, $task);
 
         $form->handleRequest($request);
 
-        if ($form->isValid()) {
-            $em = $this->getDoctrine()->getManager();
-
+        if ($form->isSubmitted() && $form->isValid()) {
             $em->persist($task);
             $em->flush();
 
@@ -41,20 +44,23 @@ class TaskController extends AbstractController
             return $this->redirectToRoute('task_list');
         }
 
-        return $this->render('task/create.html.twig', ['form' => $form->createView()]);
+        return $this->render('task/create.html.twig', ['form' => $form]);
     }
 
     /**
      * @Route("/tasks/{id}/edit", name="task_edit")
      */
-    public function editAction(Task $task, Request $request)
+    public function editAction(Task $task, Request $request, EntityManagerInterface $em): RedirectResponse|Response
     {
         $form = $this->createForm(TaskType::class, $task);
 
         $form->handleRequest($request);
 
-        if ($form->isValid()) {
-            $this->getDoctrine()->getManager()->flush();
+        if ($form->isSubmitted() && $form->isValid()) {
+            try {
+                $em->flush();
+            } catch (OptimisticLockException|ORMException $e) {
+            }
 
             $this->addFlash('success', 'La tâche a bien été modifiée.');
 
@@ -66,14 +72,24 @@ class TaskController extends AbstractController
             'task' => $task,
         ]);
     }
+    /**
+     * @Route("/tasks/done", name="task_list_done")
+     */
+    public function listDone(TaskRepository $taskRepository): Response
+    {
+        return $this->render('task/is_done.html.twig', ['tasks' => $taskRepository->findBy(['isDone' => true])]);
+    }
 
     /**
      * @Route("/tasks/{id}/toggle", name="task_toggle")
      */
-    public function toggleTaskAction(Task $task): RedirectResponse
+    public function toggleTaskAction(Task $task, EntityManagerInterface $em): RedirectResponse
     {
         $task->toggle(!$task->isDone());
-        $this->getDoctrine()->getManager()->flush();
+        try {
+            $em->flush();
+        } catch (OptimisticLockException|ORMException $e) {
+        }
 
         $this->addFlash('success', sprintf('La tâche %s a bien été marquée comme faite.', $task->getTitle()));
 
@@ -82,10 +98,10 @@ class TaskController extends AbstractController
 
     /**
      * @Route("/tasks/{id}/delete", name="task_delete")
+     * @throws ORMException
      */
-    public function deleteTaskAction(Task $task): RedirectResponse
+    public function deleteTaskAction(Task $task, EntityManagerInterface $em): RedirectResponse
     {
-        $em = $this->getDoctrine()->getManager();
         $em->remove($task);
         $em->flush();
 
