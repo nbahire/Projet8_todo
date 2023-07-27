@@ -13,6 +13,7 @@
 !var/sessions/.gitkeep
 !var/SymfonyRequirements.php
 /vendor/
+/tools/php-cs-fixer/vendor/
 /web/bundles/
 
 ###> symfony/framework-bundle ###
@@ -27,4 +28,5 @@
 
 ###> symfony/phpunit-bridge ###
 .phpunit.result.cache
+.php-cs-fixer.cache
 ###< symfony/phpunit-bridge ###

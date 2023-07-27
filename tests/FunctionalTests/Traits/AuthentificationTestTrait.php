@@ -1,15 +1,13 @@
 <?php
 
-namespace App\Tests\Controller\Traits;
+namespace App\Tests\FunctionalTests\Traits;
 
 use App\Entity\User;
 use App\Repository\UserRepository;
 use Symfony\Bundle\FrameworkBundle\KernelBrowser;
 
-
-trait AuthentificationTrait
+trait AuthentificationTestTrait
 {
-
     /**
      * @throws \Exception
      */
@@ -17,7 +15,7 @@ trait AuthentificationTrait
     {
 
         $userRepository = static::getContainer()->get(UserRepository::class);
-        $testUser = $userRepository->findOneByEmail('admin@mail.fr');
+        $testUser = $userRepository->findOneByEmail('user@mail.fr');
 
         $this->client->loginUser($testUser);
     }

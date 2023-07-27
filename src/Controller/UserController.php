@@ -28,8 +28,7 @@ class UserController extends AbstractController
         Request $request,
         UserPasswordHasherInterface $userPasswordHasher,
         EntityManagerInterface $em,
-    ): Response
-    {
+    ): Response {
         $user = new User();
         $form = $this->createForm(UserType::class, $user);
 
@@ -40,7 +39,8 @@ class UserController extends AbstractController
                 $userPasswordHasher->hashPassword(
                     $user,
                     $form->get('password')->getData()
-                ))
+                )
+            )
                 ->setUsername($form->get('username')->getData())
             ;
             $em->persist($user);
@@ -60,8 +60,7 @@ class UserController extends AbstractController
         Request $request,
         UserPasswordHasherInterface $userPasswordHasher,
         EntityManagerInterface $em
-    ): RedirectResponse|Response
-    {
+    ): RedirectResponse|Response {
         $form = $this->createForm(UserType::class, $user);
 
         $form->handleRequest($request);

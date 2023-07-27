@@ -1,19 +1,17 @@
 <?php
 
-namespace App\Tests\Controller;
-use App\Repository\UserRepository;
-use App\Tests\Controller\Traits\AuthentificationTrait;
+namespace App\Tests\FunctionalTests;
+
+use App\Tests\FunctionalTests\Traits\AuthentificationTestTrait;
 use Symfony\Bundle\FrameworkBundle\KernelBrowser;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
-use Symfony\Component\HttpFoundation\Request;
-use Symfony\Component\HttpFoundation\Response;
 
 class SecurityControllerTest extends WebTestCase
 {
-    use AuthentificationTrait;
+    use AuthentificationTestTrait;
     private KernelBrowser $client;
 
-    public function setUp() : void
+    public function setUp(): void
     {
         $this->client = static::createClient();
     }

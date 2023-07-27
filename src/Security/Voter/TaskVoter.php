@@ -20,7 +20,7 @@ class TaskVoter extends Voter
 
     protected function supports(string $attribute, $subject): bool
     {
-        return in_array($attribute,['TASK_DELETE','TASK_EDIT']) && $subject instanceof Task;
+        return in_array($attribute, ['TASK_DELETE','TASK_EDIT']) && $subject instanceof Task;
     }
 
     protected function voteOnAttribute($attribute, $subject, TokenInterface $token): bool

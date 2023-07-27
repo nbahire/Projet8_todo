@@ -1,21 +1,19 @@
 <?php
 
-namespace App\Tests\Controller;
-use App\Repository\TaskRepository;
-use App\Tests\Controller\Traits\AuthentificationTrait;
+namespace App\Tests\FunctionalTests;
+
+use App\Tests\FunctionalTests\Traits\AuthentificationTestTrait;
 use Symfony\Bundle\FrameworkBundle\KernelBrowser;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
 use Symfony\Component\HttpFoundation\Response;
 
 class TaskControllerTest extends WebTestCase
 {
-    use AuthentificationTrait;
+    use AuthentificationTestTrait;
     private KernelBrowser $client;
-    private string $route;
 
     public function setUp(): void
     {
-        $this->route = '/tasks/90/edit';
         $this->client = static::createClient();
     }
 
@@ -25,17 +23,15 @@ class TaskControllerTest extends WebTestCase
     public function testTaskCreateAction()
     {
         $this->loginUser();
-        $crawler = $this->client->request('GET', '/tasks/create');
-
-        $form = $crawler->selectButton('Ajouter')->form([
-            'task[title]'=>'test5555',
-            'task[content]'=>'lorem5555'
+        $this->client->request('GET', '/tasks/create');
+        $this->client->submitForm('Ajouter', [
+            'task[title]'=>'TaskTitleTest',
+            'task[content]'=>'TaskContentTest'
         ]);
 
-        $this->client->submit($form);
-        $this->assertEquals(200, $this->client->getResponse()->getStatusCode(), $this->client->getResponse()->getContent());
-
-        $this->assertSelectorTextContains('div.alert-success', "Superbe ! Votre tache a bien été envoyé");
+        $this->assertEquals(302, $this->client->getResponse()->getStatusCode());
+        $this->client->followRedirect();
+        $this->assertSelectorTextContains('div.alert-success', "La tâche a été bien été ajoutée.");
     }
     /**
      * @throws \Exception
@@ -53,21 +49,26 @@ class TaskControllerTest extends WebTestCase
     public function testTaskEditAction()
     {
         $this->loginUser();
-
-        $crawler = $this->client->request('GET', '/tasks/90/edit');
+        $this->client->request('GET', '/tasks/12/edit');
+        $this->client->submitForm('Modifier', [
+            'task[title]' => 'Hello world',
+            'task[content]' => 'Contenu modifié',
+        ]);
+        $this->assertResponseRedirects('/tasks', Response::HTTP_FOUND);
+        $this->client->followRedirect();
         $this->assertResponseIsSuccessful();
-        $this->assertResponseStatusCodeSame(Response::HTTP_OK);
+        $this->assertSelectorTextContains('div.alert-success', "Superbe ! La tâche a bien été modifiée.");
     }
 
     /**
      * @throws \Exception
      */
-    public function testTtoggleTaskAction()
+    public function testToggleTaskAction()
     {
         $this->loginUser();
 
-        $crawler = $this->client->request('GET', '/tasks/9/toggle');
-        $this->assertEquals(Response::HTTP_FOUND, $this->client->getResponse()->getStatusCode());
+        $this->client->request('GET', '/tasks/14/toggle');
+        $this->assertResponseRedirects('/tasks', Response::HTTP_FOUND);
         $crawler = $this->client->followRedirect();
 
         $this->assertEquals(Response::HTTP_OK, $this->client->getResponse()->getStatusCode());
@@ -82,7 +83,7 @@ class TaskControllerTest extends WebTestCase
     {
         $this->loginUser();
 
-        $this->client->request('GET', '/tasks/90/delete');
+        $this->client->request('GET', '/tasks/1/delete');
 
         $this->assertEquals(Response::HTTP_FORBIDDEN, $this->client->getResponse()->getStatusCode());
     }
@@ -91,15 +92,16 @@ class TaskControllerTest extends WebTestCase
     /**
      * @throws \Exception
      */
-    public function testDeleteTaskAction()
+    public function testAdminDeleteTaskAction()
     {
         $this->loginAdmin();
 
-        $this->client->request('GET', '/tasks/160/delete');
-        $this->assertEquals(Response::HTTP_FOUND, $this->client->getResponse()->getStatusCode());
+        $this->client->request('GET', '/tasks/80/delete');
+        $this->assertResponseRedirects('/tasks', Response::HTTP_FOUND);
         $this->client->followRedirect();
 
-        $this->assertEquals(Response::HTTP_OK, $this->client->getResponse()->getStatusCode());
+        $this->assertResponseIsSuccessful();
+        $this->assertSelectorTextContains('div.alert-success', "Superbe ! La tâche a bien été supprimée.");
     }
 
     /**
@@ -109,11 +111,12 @@ class TaskControllerTest extends WebTestCase
     {
         $this->loginAdmin();
 
-        $this->client->request('GET', '/tasks/79/delete');
-        $this->assertEquals(Response::HTTP_FOUND, $this->client->getResponse()->getStatusCode());
+        $this->client->request('GET', '/tasks/5/delete');
+        $this->assertResponseRedirects('/tasks', Response::HTTP_FOUND);
         $this->client->followRedirect();
 
-        $this->assertEquals(Response::HTTP_OK, $this->client->getResponse()->getStatusCode());
+        $this->assertResponseIsSuccessful();
+        $this->assertSelectorTextContains('div.alert-success', "Superbe ! La tâche a bien été supprimée.");
     }
 
     /**
@@ -124,7 +127,7 @@ class TaskControllerTest extends WebTestCase
         $this->loginAdmin();
 
         $this->client->request('GET', '/tasks/48/delete');
-        $this->assertEquals(Response::HTTP_NOT_FOUND, $this->client->getResponse()->getStatusCode());
+        $this->assertEquals(Response::HTTP_FORBIDDEN, $this->client->getResponse()->getStatusCode());
 
     }
 
