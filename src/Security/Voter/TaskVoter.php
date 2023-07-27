@@ -33,7 +33,7 @@ class TaskVoter extends Voter
 
         $taskOwner = $subject->getUser();
 
-        if (null === $taskOwner->getId()  ) {
+        if (null === $taskOwner) {
             return $this->security->isGranted('ROLE_ADMIN');
         }
 

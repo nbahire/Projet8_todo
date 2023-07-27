@@ -2,6 +2,7 @@
 
 namespace App\Tests\Controller;
 use App\Repository\UserRepository;
+use App\Tests\Controller\Traits\AuthentificationTrait;
 use Symfony\Bundle\FrameworkBundle\KernelBrowser;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
 use Symfony\Component\HttpFoundation\Request;
@@ -9,21 +10,21 @@ use Symfony\Component\HttpFoundation\Response;
 
 class SecurityControllerTest extends WebTestCase
 {
-    private KernelBrowser|null $client = null;
-    private UserRepository $userRepository;
+    use AuthentificationTrait;
+    private KernelBrowser $client;
 
     public function setUp() : void
-
     {
         $this->client = static::createClient();
-
-        $this->urlGenerator = $this->client->getContainer()->get('router.default');
-
     }
+
+    /**
+     * @throws \Exception
+     */
     public function testLogin()
     {
-        $crawler = $this->client->request(Request::METHOD_GET, $this->urlGenerator->generate('app_login'));
-        $this->assertResponseStatusCodeSame(Response::HTTP_OK);
-
+        $this->loginUser();
+        $this->client->request('GET', '/');
+        $this->assertEquals(200, $this->client->getResponse()->getStatusCode());
     }
 }

@@ -15,17 +15,16 @@ use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
 
-#[IsGranted('ROLE_USER')]
 class TaskController extends AbstractController
 {
     #[Route('/tasks', name: 'task_list')]
-    public function listAction(TaskRepository $taskRepository): Response
+    public function taskListAction(TaskRepository $taskRepository): Response
     {
         return $this->render('task/list.html.twig', ['tasks' => $taskRepository->findBy(['user' => $this->getUser()])]);
     }
 
     #[Route('/tasks/create', name: 'task_create')]
-    public function createAction(Request $request, EntityManagerInterface $em): Response
+    public function taskCreateAction(Request $request, EntityManagerInterface $em): Response
     {
         $task = new Task();
         $form = $this->createForm(TaskType::class, $task);
@@ -45,9 +44,9 @@ class TaskController extends AbstractController
     }
 
     #[Route('/tasks/{id}/edit', name: 'task_edit')]
-    public function editAction(Task $task, Request $request, EntityManagerInterface $em): RedirectResponse|Response
+    #[IsGranted('TASK_EDIT', subject: 'task')]
+    public function taskEditAction(Task $task, Request $request, EntityManagerInterface $em): RedirectResponse|Response
     {
-        $this->denyAccessUnlessGranted('TASK_EDIT', $task);
         $form = $this->createForm(TaskType::class, $task);
 
         $form->handleRequest($request);
@@ -83,10 +82,9 @@ class TaskController extends AbstractController
     }
 
     #[Route('/tasks/{id}/delete', name: 'task_delete')]
+    #[IsGranted('TASK_DELETE', subject: 'task')]
     public function deleteTaskAction(Task $task, EntityManagerInterface $em): RedirectResponse
     {
-
-        $this->denyAccessUnlessGranted('TASK_DELETE', $task);
         $em->remove($task);
         $em->flush();
 

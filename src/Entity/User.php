@@ -22,9 +22,6 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[Assert\Email(message:"Le format de l'adresse n'est pas correcte.")]
     private ?string $email = null;
 
-    #[ORM\Column]
-    private array $roles = [];
-
     #[ORM\Column(type:"string", length:64)]
     private ?string $password = null;
 
@@ -34,6 +31,9 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
 
     #[ORM\Column]
     private ?\DateTimeImmutable $createdAt;
+
+    #[ORM\Column(length: 100)]
+    private ?string $role = 'ROLE_USER';
 
     public function __construct()
     {
@@ -71,18 +71,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
      */
     public function getRoles(): array
     {
-        $roles = $this->roles;
-        // guarantee every user at least has ROLE_USER
-        $roles[] = 'ROLE_USER';
-
-        return array_unique($roles);
-    }
-
-    public function setRoles(array $roles): static
-    {
-        $this->roles = $roles;
-
-        return $this;
+        return [$this->role];
     }
 
     /**
@@ -133,32 +122,14 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
         return $this;
     }
 
-    /**
-     * @return Collection<int, Task>
-     */
-    public function getTasks(): Collection
+    public function getRole(): ?string
     {
-        return $this->tasks;
+        return $this->role;
     }
 
-    public function addTask(Task $task): static
+    public function setRole(string $role): static
     {
-        if (!$this->tasks->contains($task)) {
-            $this->tasks->add($task);
-            $task->setUser($this);
-        }
-
-        return $this;
-    }
-
-    public function removeTask(Task $task): static
-    {
-        if ($this->tasks->removeElement($task)) {
-            // set the owning side to null (unless already changed)
-            if ($task->getUser() === $this) {
-                $task->setUser(null);
-            }
-        }
+        $this->role = $role;
 
         return $this;
     }
