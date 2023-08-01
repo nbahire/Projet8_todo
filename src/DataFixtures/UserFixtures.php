@@ -27,7 +27,7 @@ class UserFixtures extends Fixture
         $testUser = new User();
         $testUser->setUsername('user')
             ->setEmail('user@mail.fr')
-            ->setPassword( $this->userPasswordHasher->hashPassword($testUser, 'user'))
+            ->setPassword($this->userPasswordHasher->hashPassword($testUser, 'user'))
             ->setRole('ROLE_USER')
         ;
         $this->setTask($manager, $testUser, $faker);

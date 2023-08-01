@@ -3,6 +3,7 @@
 namespace App\Repository;
 
 use App\Entity\Task;
+use App\Manager\TaskManagerInterface;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
 
@@ -14,29 +15,32 @@ use Doctrine\Persistence\ManagerRegistry;
  * @method Task[]    findAll()
  * @method Task[]    findBy(array $criteria, array $orderBy = null, $limit = null, $offset = null)
  */
-class TaskRepository extends ServiceEntityRepository
+class TaskRepository extends ServiceEntityRepository implements TaskManagerInterface
 {
     public function __construct(ManagerRegistry $registry)
     {
         parent::__construct($registry, Task::class);
     }
-
-    public function save(Task $entity, bool $flush = false): void
+    public function create(Task $task): void
     {
-        $this->getEntityManager()->persist($entity);
-
-        if ($flush) {
-            $this->getEntityManager()->flush();
-        }
+        $this->_em->persist($task);
+        $this->_em->flush();
     }
 
-    public function remove(Task $entity, bool $flush = false): void
+    public function edit(Task $task): void
     {
-        $this->getEntityManager()->remove($entity);
-
-        if ($flush) {
-            $this->getEntityManager()->flush();
-        }
+        $this->_em->flush();
     }
 
+    public function delete(Task $task): void
+    {
+        $this->_em->remove($task);
+        $this->_em->flush();
+    }
+
+    public function toggle(Task $task): void
+    {
+        $task->toggle(!$task->isDone());
+        $this->_em->flush();
+    }
 }

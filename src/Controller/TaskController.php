@@ -4,10 +4,8 @@ namespace App\Controller;
 
 use App\Entity\Task;
 use App\Form\TaskType;
+use App\Manager\TaskManagerInterface;
 use App\Repository\TaskRepository;
-use Doctrine\ORM\EntityManagerInterface;
-use Doctrine\ORM\Exception\ORMException;
-use Doctrine\ORM\OptimisticLockException;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\Request;
@@ -17,14 +15,15 @@ use Symfony\Component\Security\Http\Attribute\IsGranted;
 
 class TaskController extends AbstractController
 {
-    #[Route('/tasks', name: 'task_list')]
+    #[Route('/tasks', name: 'task_list', methods: ['GET'])]
     public function taskListAction(TaskRepository $taskRepository): Response
     {
-        return $this->render('task/list.html.twig', ['tasks' => $taskRepository->findBy(['user' => $this->getUser()])]);
+        return $this->render('task/list.html.twig', ['tasks' => $taskRepository->findBy(['user' => $this->getUser()]),
+            'anonymousTasks' => $taskRepository->findBy(['user' => null])]);
     }
 
-    #[Route('/tasks/create', name: 'task_create')]
-    public function taskCreateAction(Request $request, EntityManagerInterface $em): Response
+    #[Route('/tasks/create', name: 'task_create', methods: ['GET','POST'])]
+    public function taskCreateAction(Request $request, TaskManagerInterface $taskManager): Response
     {
         $task = new Task();
         $form = $this->createForm(TaskType::class, $task);
@@ -32,8 +31,7 @@ class TaskController extends AbstractController
         $form->handleRequest($request);
 
         if ($form->isSubmitted() && $form->isValid()) {
-            $em->persist($task);
-            $em->flush();
+            $taskManager->create($task);
 
             $this->addFlash('success', 'La tâche a été bien été ajoutée.');
 
@@ -43,16 +41,16 @@ class TaskController extends AbstractController
         return $this->render('task/create.html.twig', ['form' => $form]);
     }
 
-    #[Route('/tasks/{id}/edit', name: 'task_edit')]
+    #[Route('/tasks/{id}/edit', name: 'task_edit', methods: ['GET','POST','PUT'])]
     #[IsGranted('TASK_EDIT', subject: 'task')]
-    public function taskEditAction(Task $task, Request $request, EntityManagerInterface $em): RedirectResponse|Response
+    public function taskEditAction(Task $task, Request $request, TaskManagerInterface $taskManager): RedirectResponse|Response
     {
         $form = $this->createForm(TaskType::class, $task);
 
         $form->handleRequest($request);
 
         if ($form->isSubmitted() && $form->isValid()) {
-            $em->flush();
+            $taskManager->edit($task);
             $this->addFlash('success', 'La tâche a bien été modifiée.');
 
             return $this->redirectToRoute('task_list');
@@ -64,29 +62,27 @@ class TaskController extends AbstractController
         ]);
     }
 
-    #[Route('/tasks/done', name: 'task_list_done')]
+    #[Route('/tasks/done', name: 'task_list_done', methods: ['GET','POST'])]
     public function listDone(TaskRepository $taskRepository): Response
     {
         return $this->render('task/is_done.html.twig', ['tasks' => $taskRepository->findBy(['isDone' => true])]);
     }
 
-    #[Route('/tasks/{id}/toggle', name: 'task_toggle')]
-    public function toggleTaskAction(Task $task, EntityManagerInterface $em): RedirectResponse
+    #[Route('/tasks/{id}/toggle', name: 'task_toggle', methods: ['GET','POST'])]
+    public function toggleTaskAction(Task $task, TaskManagerInterface $taskManager): RedirectResponse
     {
-        $task->toggle(!$task->isDone());
-        $em->flush();
+        $taskManager->toggle($task);
 
         $this->addFlash('success', sprintf('La tâche %s a bien été marquée comme faite.', $task->getTitle()));
 
         return $this->redirectToRoute('task_list');
     }
 
-    #[Route('/tasks/{id}/delete', name: 'task_delete')]
+    #[Route('/tasks/{id}/delete', name: 'task_delete', methods: ['GET','POST'])]
     #[IsGranted('TASK_DELETE', subject: 'task')]
-    public function deleteTaskAction(Task $task, EntityManagerInterface $em): RedirectResponse
+    public function deleteTaskAction(Task $task, TaskManagerInterface $taskManager): RedirectResponse
     {
-        $em->remove($task);
-        $em->flush();
+        $taskManager->delete($task);
 
         $this->addFlash('success', 'La tâche a bien été supprimée.');
 

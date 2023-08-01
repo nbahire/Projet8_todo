@@ -38,15 +38,11 @@
         <!-- Page Content -->
         <div class="container">
             <div class="row">
-                {% if app.user and app.user.role is same as 'ROLE_ADMIN' %}
+                {% if app.user and app.user.role is same as 'ROLE_ADMIN' and 'user_create' != app.request.attributes.get('_route') %}
                     <a href="{{ path('user_create') }}" class="btn btn-primary">Créer un utilisateur</a>
                 {% endif %}
                 {% if app.user %}
                     <a href="{{ path('app_logout') }}" class="pull-right btn btn-danger">Se déconnecter</a>
-                {% endif %}
-
-                {% if not app.user and 'login' != app.request.attributes.get('_route') %}
-                <a href="{{ path('app_login') }}" class="btn btn-success">Se connecter</a>
                 {% endif %}
             </div>
 

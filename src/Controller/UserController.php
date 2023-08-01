@@ -4,8 +4,8 @@ namespace App\Controller;
 
 use App\Entity\User;
 use App\Form\UserType;
+use App\Manager\UserManagerInterface;
 use App\Repository\UserRepository;
-use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\Request;
@@ -24,30 +24,18 @@ class UserController extends AbstractController
     }
 
     #[Route('/users/create', name: 'user_create', methods: ['GET', 'POST'])]
-    public function createAction(
-        Request $request,
-        UserPasswordHasherInterface $userPasswordHasher,
-        EntityManagerInterface $em,
-    ): Response
+    public function createAction(Request $request, UserPasswordHasherInterface $userPasswordHasher, UserManagerInterface $userManager): Response
     {
         $user = new User();
-        $form = $this->createForm(UserType::class, $user);
-
-        $form->handleRequest($request);
+        $form = $this->createForm(UserType::class, $user)->handleRequest($request);
 
         if ($form->isSubmitted() && $form->isValid()) {
-            $user->setPassword(
-                $userPasswordHasher->hashPassword(
-                    $user,
-                    $form->get('password')->getData()
-                ))
-                ->setUsername($form->get('username')->getData())
-            ;
-            $em->persist($user);
-            $em->flush();
+            $password = $form->get('password')->getData();
+            $username = $form->get('username')->getData();
+
+            $userManager->create($user, $userPasswordHasher, $password, $username);
 
             $this->addFlash('success', "L'utilisateur a bien été ajouté.");
-
             return $this->redirectToRoute('user_list');
         }
 
@@ -59,22 +47,17 @@ class UserController extends AbstractController
         User $user,
         Request $request,
         UserPasswordHasherInterface $userPasswordHasher,
-        EntityManagerInterface $em
-    ): RedirectResponse|Response
-    {
+        UserManagerInterface $userManager
+    ): RedirectResponse|Response {
         $form = $this->createForm(UserType::class, $user);
 
         $form->handleRequest($request);
 
         if ($form->isSubmitted() && $form->isValid()) {
-            $user->setPassword(
-                $userPasswordHasher->hashPassword(
-                    $user,
-                    $form->get('password')->getData()
-                )
-            );
+            $password = $form->get('password')->getData();
+            $username = $form->get('username')->getData();
 
-            $em->flush();
+            $userManager->edit($user, $userPasswordHasher, $password, $username);
 
             $this->addFlash('success', "L'utilisateur a bien été modifié");
 

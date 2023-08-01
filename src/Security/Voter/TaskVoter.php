@@ -18,12 +18,12 @@ class TaskVoter extends Voter
         $this->security = $security;
     }
 
-    protected function supports(string $attribute, $subject): bool
+    protected function supports(string $attribute, mixed $subject): bool
     {
-        return in_array($attribute,['TASK_DELETE','TASK_EDIT']) && $subject instanceof Task;
+        return in_array($attribute, ['TASK_DELETE','TASK_EDIT']) && $subject instanceof Task;
     }
 
-    protected function voteOnAttribute($attribute, $subject, TokenInterface $token): bool
+    protected function voteOnAttribute(string $attribute, mixed $subject, TokenInterface $token): bool
     {
         $loggedUser = $token->getUser();
 
